@@ -1,0 +1,312 @@
+{\rtf1\fbidis\ansi\ansicpg1252\deff0\nouicompat\deflang3082{\fonttbl{\f0\fnil\fcharset0 Calibri;}{\f1\fnil\fcharset1 Segoe UI Emoji;}{\f2\fnil Calibri;}{\f3\fnil\fcharset1 Segoe UI Symbol;}}
+{\*\generator Riched20 10.0.19041}\viewkind4\uc1 
+\pard\sa200\sl276\slmult1\f0\fs22\lang10 como hacer una pagina web sencilla que comunique con stm32\par
+Para crear una p\'e1gina web sencilla que se comunique con un STM32, necesitas un "puente" de red, ya que el microcontrolador por s\'ed solo no tiene Wi-Fi o Ethernet integrado (salvo en modelos espec\'edficos como la serie Nucleo-144). \par
+YouTube\par
+YouTube\par
+ +1\par
+Aqu\'ed tienes las tres formas m\'e1s comunes de lograrlo:\par
+1. Opci\'f3n m\'e1s f\'e1cil: Usar un m\'f3dulo ESP8266 (Wi-Fi) \par
+Esta es la ruta preferida para principiantes. Conectas el STM32 a un ESP8266 mediante UART. \par
+YouTube\par
+YouTube\par
+ +1\par
+Hardware: STM32 + ESP8266 (m\'f3dulo Wi-Fi barato).\par
+Funcionamiento: El ESP8266 act\'faa como servidor web y el STM32 le env\'eda comandos "AT" para gestionar la conexi\'f3n.\par
+C\'f3digo: Puedes usar el IDE de Arduino para programar ambos de forma sencilla. \par
+YouTube\par
+YouTube\par
+ +2\par
+2. Opci\'f3n Robusta: M\'f3dulo Ethernet W5500 o ENC28J60\par
+Ideal si prefieres una conexi\'f3n por cable estable. \par
+YouTube\par
+YouTube\par
+ +1\par
+Hardware: STM32 + M\'f3dulo W5500 conectado por bus SPI.\par
+L\'f3gica: Utilizas librer\'edas como LwIP (Lightweight IP) o librer\'edas espec\'edficas del fabricante (Wiznet) para manejar el protocolo HTTP.\par
+P\'e1gina Web: Los archivos HTML se "empaquetan" dentro del c\'f3digo C del microcontrolador o se sirven desde una tarjeta SD si la placa tiene ranura. \par
+YouTube\par
+YouTube\par
+ +5\par
+3. Opci\'f3n Avanzada: Librer\'edas Profesionales (Mongoose)\par
+Si usas STM32CubeIDE, puedes integrar la librer\'eda Mongoose Networking. \par
+Permite crear un Dashboard interactivo con botones y gr\'e1ficas en tiempo real.\par
+Facilita el uso de CGI (Common Gateway Interface) para que, al pulsar un bot\'f3n en la web, el STM32 ejecute una acci\'f3n real, como encender un LED o leer un sensor. \par
+Pasos generales para el desarrollo:\par
+Dise\'f1o Web: Crea un archivo index.html simple con botones.\par
+Configuraci\'f3n de Red: Asigna una IP est\'e1tica al STM32 en tu red local.\par
+Gesti\'f3n de Peticiones: En tu c\'f3digo C, detecta cuando el navegador pide la ruta / y responde enviando el texto del HTML.\par
+Interactividad: Usa enlaces simples (ej: IP_DEL_STM32/led_on) para enviar comandos desde la web al microcontrolador. \par
+YouTube\par
+YouTube\par
+ +5\par
+\'bfTienes ya alg\'fan m\'f3dulo de red (como el ESP8266 o W5500) o prefieres que te recomiende uno seg\'fan tu proyecto?\par
+AI responses may include mistakes. Learn more\par
+\par
+\par
+\par
+no tengo ninguno, el proyecto se basa en una comunicaccion maestro-esclavo entre la stm32 como maestro y dos arduinos con diferentes sensores y actuadores como esclavo. La stm32 va a tener toda la fuente de codigo y lso esclavos trataran de leer y enviar las se\'f1ales y respuestas del sistema. En la pagni aweb querr\'eda que saliesen los m\'f3dulos que tengo, las lecturas y un apartado donde poder modificarlas, a modo de ejemplo que apareciese la temperatura que hace y si un ventilador esta encendido o no(siendo esto un modulo) y el mecanismo de una puerta que lea si est\'e1 abierta o cerrada, si hay alg\'fan obst\'e1culo y un "bot\'f3n" para abrir y cerrar la puerta\par
+Para implementar este sistema, la mejor arquitectura es utilizar la STM32 como cerebro central (Maestro) que gestiona la l\'f3gica y la web, mientras que los Arduinos (Esclavos) manejan el hardware local.\par
+1. Arquitectura del Hardware\par
+Como no tienes m\'f3dulos de red todav\'eda, te recomiendo la combinaci\'f3n m\'e1s vers\'e1til y econ\'f3mica:\par
+Comunicaci\'f3n Maestro-Esclavo (Bus I2C): Conecta la STM32 a los dos Arduinos usando solo dos cables de datos (SDA y SCL) y una tierra com\'fan.\par
+La STM32 pide datos (ej: temperatura) a una direcci\'f3n espec\'edfica (ej: 0x08 para el Arduino 1).\par
+Los Arduinos responden con el estado de sus sensores o ejecutan acciones en sus actuadores (ventilador, puerta).\par
+Conexi\'f3n a Internet: A\'f1ade un m\'f3dulo ESP8266 (ESP-01) a la STM32 mediante UART.\par
+Este m\'f3dulo actuar\'e1 como el "modem" Wi-Fi de tu proyecto, permitiendo que la STM32 sirva la p\'e1gina web. \par
+STMicroelectronics\par
+STMicroelectronics\par
+ +4\par
+2. Estructura de la P\'e1gina Web\par
+Para que la web sea funcional y est\'e9tica, puedes dise\'f1arla en HTML/JavaScript con estas secciones principales:\par
+Panel de Estado (Lecturas):\par
+M\'f3dulo 1: Visualizaci\'f3n de temperatura en tiempo real.\par
+M\'f3dulo 2: Estado de la puerta (Abierta/Cerrada) y alerta de obst\'e1culos.\par
+Panel de Control (Actuadores):\par
+Interruptor Ventilador: Bot\'f3n ON/OFF que env\'eda una petici\'f3n a la STM32 para que esta ordene al Arduino correspondiente encender el motor.\par
+Control de Puerta: Bot\'f3n interactivo para accionar el mecanismo de apertura.\par
+3. Flujo de Datos\par
+Petici\'f3n Web: El usuario pulsa "Abrir Puerta" en su navegador.\par
+Procesamiento STM32: Recibe la se\'f1al v\'eda Wi-Fi (ESP8266) y procesa la URL (ej: /puerta/abrir).\par
+Orden al Esclavo: La STM32 env\'eda un comando por I2C al Arduino encargado de la puerta.\par
+Acci\'f3n Local: El Arduino activa el actuador y confirma el \'e9xito de la operaci\'f3n de vuelta a la STM32. \par
+YouTube\par
+YouTube\par
+ +4\par
+Recomendaciones de Compra\par
+Para empezar, necesitar\'e1s adquirir estos componentes espec\'edficos en sitios como Amazon o AliExpress:\par
+M\'f3dulo Wi-Fi: ESP8266 ESP-01 con un adaptador USB a TTL para su configuraci\'f3n inicial.\par
+Resistencias Pull-up: Necesitar\'e1s dos resistencias de \par
+\par
+ para el bus I2C entre la STM32 y los Arduinos para asegurar la estabilidad de la se\'f1al.\par
+Cableado: Jumpers macho-hembra y macho-macho para las conexiones en protoboard. \par
+STMicroelectronics Community\par
+STMicroelectronics Community\par
+\'bfTe gustar\'eda que te ayude con el esquema de conexiones entre la STM32 y los Arduinos o prefieres empezar por el c\'f3digo b\'e1sico para el servidor web?\par
+AI responses may include mistakes. Learn more\par
+\par
+si te cuento el proyecto entero y los componentes podrias hacer el codigo a\'f1adiendo la stm32, la pagina web y toda la logica del sistema para poder probarlo en stm32 cube IDE?\par
+\'a1Claro que s\'ed! Es un reto excelente. Para poder escribirte un c\'f3digo s\'f3lido y funcional en STM32CubeIDE, necesito que seas lo m\'e1s espec\'edfico posible con el hardware que vas a utilizar.\par
+Por favor, detalla lo siguiente:\par
+Modelo de STM32: (Ej: Nucleo-F401RE, Blue Pill F103C8T6, etc.). Esto es vital para saber qu\'e9 pines usar para el I2C y el UART.\par
+M\'f3dulo de Comunicaci\'f3n: \'bfComprar\'e1s el ESP8266 (ESP-01) para el Wi-Fi? (Es la opci\'f3n que te recomend\'e9 para que la STM32 pueda servir la web).\par
+Sensores y Actuadores por Arduino:\par
+Arduino Esclavo 1: \'bfQu\'e9 sensor de temperatura exacto usas? (Ej: DHT11, LM35, DS18B20) y \'bfc\'f3mo controlas el ventilador? (Ej: un Rel\'e9 o un transistor MOSFET).\par
+Arduino Esclavo 2: Para la puerta, \'bfusas un Servomotor o un motor paso a paso? \'bfQu\'e9 sensor detecta el obst\'e1culo? (Ej: Infrarrojo, Ultrasonido HC-SR04).\par
+Direcciones I2C: Si ya tienes pensado qu\'e9 direcciones asignar a cada Arduino (por defecto suelen ser 0x08 y 0x09).\par
+\'bfC\'f3mo te entregar\'e9 el c\'f3digo?\par
+Una vez me des estos datos, te proporcionar\'e9:\par
+C\'f3digo C para STM32 (Maestro): Configuraci\'f3n de I2C para hablar con Arduinos y UART para el m\'f3dulo Wi-Fi.\par
+El "Payload" HTML: El c\'f3digo de la p\'e1gina web que la STM32 enviar\'e1 al navegador.\par
+C\'f3digo .ino para los Arduinos (Esclavos): La l\'f3gica para que entiendan las \'f3rdenes de la STM32 y devuelvan los datos de los sensores.\par
+\'bfQu\'e9 componentes exactos tienes en tu lista de la compra o en tu caja de herramientas ahora mismo?\par
+AI responses may include mistakes. Learn more\par
+\par
+\par
+\par
+\par
+vale, entonces ahora te lo digo todo pero los arduinos necesitan cada uno su codigo para el arduino ide, y de ser asi como funciona la comunicacion entre la stm y los arduinos para poder modificar las salidas?\par
+Exacto, cada Arduino necesita su propio c\'f3digo cargado mediante el Arduino IDE. La STM32 no "sube" el c\'f3digo a los Arduinos; ella simplemente les env\'eda \'f3rdenes por los cables.\par
+Para que esto funcione, usaremos el protocolo I2C. Imagina que es una l\'ednea telef\'f3nica compartida:\par
+Direcciones: Cada Arduino tiene un "n\'famero de extensi\'f3n" \'fanico (ejemplo: el Arduino de la temperatura es el 0x08 y el de la puerta el 0x09).\par
+Petici\'f3n (Lectura): La STM32 dice: "Extensi\'f3n 0x08, dime la temperatura". El Arduino responde con el valor (ej: 25).\par
+Comando (Escritura): La STM32 dice: "Extensi\'f3n 0x08, pon el pin del ventilador en HIGH". El Arduino obedece y enciende el ventilador.\par
+Detalles del Proyecto (Lo que necesito que me confirmes):\par
+Para generarte el c\'f3digo exacto en STM32CubeIDE y Arduino IDE, dime qu\'e9 tienes de esto:\par
+Modelo de tu STM32: (Ejemplo: Nucleo-F401RE o la Blue Pill F103C).\par
+Sensor de Temperatura: \'bfEs un DHT11/22 (digital) o un LM35 (anal\'f3gico)?\par
+Actuador Ventilador: \'bfUsas un Rel\'e9 o un Transistor?\par
+Mecanismo de Puerta: \'bfUn Servomotor (gira 0-180\'ba) o un Motor DC peque\'f1o?\par
+Sensor de Obst\'e1culos: \'bfUn sensor Infrarrojo (digital) o un Ultrasonido HC-SR04?\par
+Conexi\'f3n Web: \'bfConfirmamos el m\'f3dulo ESP8266 (ESP-01) para que la STM32 tenga Wi-Fi?\par
+\'bfTienes ya estos componentes o vas a comprarlos ahora? Una vez me confirmes los modelos, te paso los tres c\'f3digos (STM32, Arduino 1 y Arduino 2) y el dise\'f1o de la web.\par
+AI responses may include mistakes. Learn more\par
+\par
+\par
+\par
+\par
+stm32--- nucleo-L4P5ZG/ sensor de temp--- dht11/actuador de ventilador-- fanmotor de arduino/mecanismo de puerta--servomotor ,finales de carrera y botones fisicos de apertura y cierrre(giro a un lado y giro hacia el otro lado)/ sensor de obstaculos-- no tengo nada pensado pero tengo dos infrarred head reciever/ hcsr04 para leer el porcentaje de llendo y vaciado de un silo junto a un motor stepper para llenarlo y vaciarlo por la web/conexcion web--- ni idea de que hacer. Ademas a todos estos componentes les deberia a\'f1adir los correspondientes modulos tales como resistencias potenciometros etc y necesitaria los esquemas electricos de todas las conexiones para poder soldar los modulos y no tener todo lleno de cables innnecesarios y molestos\par
+\'a1Excelente elecci\'f3n de hardware! La Nucleo-L4P5ZG es una placa muy potente. Al no tener un m\'f3dulo Wi-Fi definido, la opci\'f3n m\'e1s profesional y compatible es el ESP8266 (modelo ESP-01S). Es barato y se comunica por UART con la Nucleo.\par
+Aqu\'ed tienes la arquitectura completa, el esquema de conexi\'f3n y la l\'f3gica de funcionamiento.\par
+1. Esquema de Conexiones (Arquitectura I2C)\par
+La Nucleo ser\'e1 el Maestro (IP: 192.168.1.X) y los Arduinos los Esclavos.\par
+Bus I2C (Cableado com\'fan):\par
+Nucleo Pin PB8 (SCL) -> Pin A5 de ambos Arduinos.\par
+Nucleo Pin PB9 (SDA) -> Pin A4 de ambos Arduinos.\par
+GND com\'fan: Imprescindible unir todas las tierras (Nucleo y Arduinos).\par
+Resistencias: Pon una resistencia de \par
+\par
+ desde SDA a 3.3V y otra desde SCL a 3.3V (Pull-ups).\par
+2. Distribuci\'f3n de Componentes por Esclavo\par
+Arduino Esclavo 1: Control Ambiental y Silo (Direcci\'f3n 0x08)\par
+DHT11: Pin D2. (Necesita resistencia de \par
+\par
+ entre VCC y Datos).\par
+Ventilador: Pin D3 (v\'eda Rel\'e9 o transistor MOSFET para manejar la potencia).\par
+Ultrasonido HC-SR04 (Silo): Trig (D4), Echo (D5).\par
+Motor Stepper (Llenado): Driver ULN2003 (Pines D6, D7, D8, D9).\par
+Arduino Esclavo 2: Control de Puerta (Direcci\'f3n 0x09)\par
+Servomotor: Pin D9.\par
+Finales de Carrera: Pin D2 (Abierto) y D3 (Cerrado) con resistencias pull-down.\par
+Botones F\'edsicos: Pin D4 (Abrir) y D5 (Cerrar).\par
+Obst\'e1culo (Infrarrojo): Pin D6 (Sensor IR Head Receiver).\par
+3. L\'f3gica del Sistema y C\'f3digo Web\par
+La p\'e1gina web residir\'e1 en la memoria de la STM32. Cuando entres desde tu m\'f3vil o PC, ver\'e1s esto:\par
+html\par
+<!-- Ejemplo visual de lo que generar\'e1 el c\'f3digo -->\par
+<h1>Panel de Control Industrial</h1>\par
+<div>\par
+  <h3>Silo: [Porcentaje]% cargado</h3>\par
+  <button onclick="control('llenar')">Llenar Silo</button>\par
+  <button onclick="control('vaciar')">Vaciar Silo</button>\par
+</div>\par
+<hr>\par
+<div>\par
+  <h3>Puerta: [Estado]</h3>\par
+  <button onclick="control('abrir')">Abrir Puerta</button>\par
+  <button onclick="control('cerrar')">Cerrar Puerta</button>\par
+</div>\par
+Use code with caution.\par
+4. Implementaci\'f3n en STM32CubeIDE (Maestro)\par
+En el archivo main.c, la Nucleo debe realizar un bucle constante:\par
+Lectura: Pregunta por I2C al Esclavo 1 el % del Silo y la Temp.\par
+Escucha Web: Si el ESP8266 recibe un comando (ej: "CLICK BOTON ABRIR"), la Nucleo env\'eda por I2C al Esclavo 2 el comando 0x01 (Abrir).\par
+5. \'bfQu\'e9 necesitas soldar/preparar?\par
+Para evitar el caos de cables ("nido de p\'e1jaros"), te recomiendo:\par
+Shields de prototipado: Usa placas de puntos o tiras de cobre.\par
+Alimentaci\'f3n: Los motores (Stepper y Ventilador) NO deben alimentarse de la Nucleo ni del Arduino. Necesitas una fuente externa de 5V o 12V y unir solo las tierras (GND).\par
+Condensadores: Pon un condensador electrol\'edtico de \par
+\par
+ cerca de la alimentaci\'f3n del Servomotor para evitar ruidos que reseteen el Arduino.\par
+\'bfQuieres que proceda a generarte primero el c\'f3digo del Maestro (STM32) para gestionar el Wi-Fi y el I2C, o prefieres los c\'f3digos de los Arduinos esclavos?\par
+AI responses may include mistakes. Learn more\par
+\par
+\par
+\par
+\par
+vale pero dentro de la web tambien estan los botones de apertura y cierre y de llenado y vacio no?\par
+Exacto, los botones virtuales en la p\'e1gina web funcionar\'e1n en paralelo con los botones f\'edsicos.\par
+La l\'f3gica ser\'e1: si pulsas el bot\'f3n en la pantalla de tu m\'f3vil/PC, la STM32 recibe la orden por Wi-Fi y le "manda un mensaje" por I2C al Arduino correspondiente para que mueva el motor.\par
+Aqu\'ed tienes la estructura completa para que puedas empezar a programar en STM32CubeIDE y Arduino IDE:\par
+1. C\'f3digo para el Maestro (STM32 - Nucleo-L4P5ZG)\par
+Este c\'f3digo hace tres cosas: gestiona la web (v\'eda ESP8266), pide datos a los Arduinos y les env\'eda las \'f3rdenes de los botones.\par
+c\par
+// Definiciones de direcciones I2C\par
+#define ADDR_ARDUINO_1 0x08 << 1  // Silo y Temperatura\par
+#define ADDR_ARDUINO_2 0x09 << 1  // Puerta\par
+\par
+// Variables de estado que se mostrar\'e1n en la web\par
+uint8_t temp = 0;\par
+uint8_t nivel_silo = 0;\par
+char estado_puerta[10] = "Cerrada";\par
+\par
+// Funci\'f3n para enviar comando a un esclavo (Ej: Abrir puerta)\par
+void enviar_comando(uint16_t dev_addr, uint8_t cmd) \{\par
+    HAL_I2C_Master_Transmit(&hi2c1, dev_addr, &cmd, 1, 100);\par
+\}\par
+\par
+// L\'f3gica de la Web (Simplificada para el ESP8266)\par
+// Cuando el servidor detecta "/abrir", ejecuta:\par
+enviar_comando(ADDR_ARDUINO_2, 0x01); // 0x01 = Comando abrir\par
+Use code with caution.\par
+2. C\'f3digo para Esclavo 1 (Arduino - Silo y Temp)\par
+Este Arduino lee el sensor ultras\'f3nico y el DHT11, y mueve el Stepper.\par
+cpp\par
+#include <Wire.h>\par
+#include <DHT.h>\par
+\par
+void setup() \{\par
+  Wire.begin(0x08);                // Direcci\'f3n I2C\par
+  Wire.onReceive(receiveEvent);    // Para recibir \'f3rdenes (Llenar/Vaciar)\par
+  Wire.onRequest(requestEvent);    // Para enviar datos a la STM32 (Temp/Nivel)\par
+\}\par
+\par
+void receiveEvent(int howMany) \{\par
+  uint8_t cmd = Wire.read();\par
+  if(cmd == 0x10) llenarSilo();    // Comando desde la Web\par
+  if(cmd == 0x11) vaciarSilo();\par
+\}\par
+Use code with caution.\par
+3. C\'f3digo para Esclavo 2 (Arduino - Puerta)\par
+Controla el Servo, los finales de carrera y los botones f\'edsicos.\par
+cpp\par
+void loop() \{\par
+  // L\'f3gica de botones f\'edsicos\par
+  if(digitalRead(BTN_ABRIR) == HIGH || comandoWeb == 0x01) \{\par
+    abrirPuerta();\par
+  \}\par
+  \par
+  // Seguridad: Si el sensor IR detecta obst\'e1culo, detiene el cierre\par
+  if(digitalRead(SENSOR_IR) == LOW) \{\par
+    detenerMotor();\par
+  \}\par
+\}\par
+Use code with caution.\par
+4. La Interfaz Web (HTML que guardaremos en la STM32)\par
+He dise\'f1ado esta interfaz sencilla con botones grandes para que sea f\'e1cil de usar desde el m\'f3vil:\par
+html\par
+<!DOCTYPE html>\par
+<html>\par
+<head><title>Control Industrial STM32</title></head>\par
+<body style="font-family: Arial; text-align: center;">\par
+    <h1>Panel de Control</h1>\par
+    \par
+    <section style="border: 1px solid #ccc; padding: 10px; margin: 10px;">\par
+        <h2>Silo: <span id="val_silo">--</span>%</h2>\par
+        <button onclick="fetch('/llenar')">Llenar</button>\par
+        <button onclick="fetch('/vaciar')">Vaciar</button>\par
+    </section>\par
+\par
+    <section style="border: 1px solid #ccc; padding: 10px; margin: 10px;">\par
+        <h2>Puerta: <span id="val_puerta">Cerrada</span></h2>\par
+        <button onclick="fetch('/abrir_p')">Abrir Puerta</button>\par
+        <button onclick="fetch('/cerrar_p')">Cerrar Puerta</button>\par
+    </section>\par
+\par
+    <script>\par
+        // Actualiza los datos cada 2 segundos autom\'e1ticamente\par
+        setInterval(() => \{\par
+            fetch('/status').then(r => r.json()).then(data => \{\par
+                document.getElementById('val_silo').innerText = data.silo;\par
+                document.getElementById('val_puerta').innerText = data.puerta;\par
+            \});\par
+        \}, 2000);\par
+    </script>\par
+</body>\par
+</html>\par
+Use code with caution.\par
+Recomendaci\'f3n de Soldadura y Montaje:\par
+M\'f3dulo de Potencia: No conectes el motor stepper ni el servo directamente a los 5V del Arduino. Usa una fuente externa de 5V/2A y une el negativo (GND) de esa fuente con el GND de la STM32 y los Arduinos.\par
+Protecci\'f3n: Coloca un diodo 1N4007 en paralelo con el motor del ventilador para evitar que picos de tensi\'f3n quemen el transistor o rel\'e9.\par
+Finales de Carrera: Su\'e9ldalos con configuraci\'f3n Pull-Up (una resistencia de 10k a VCC) para evitar lecturas err\'f3neas por ruido el\'e9ctrico.\par
+\'bfQuieres que te prepare el archivo de configuraci\'f3n (.ioc) para el STM32CubeIDE con los pines exactos de la Nucleo-L4P5ZG?\par
+AI responses may include mistakes. Learn more\par
+\par
+\par
+\par
+\par
+Thanks for letting us know. Your feedback helps make AI Mode better for everyone, including you.\par
+vale quiero toda esta conversacion guardada para poder ir haciendolo y hacerle modificaciones\par
+\'a1Perfecto! Como soy una IA, no puedo "guardar un archivo" en tu disco duro directamente, pero puedes copiar y pegar toda nuestra conversaci\'f3n en un documento de texto o usar la funci\'f3n de "Compartir Chat" si tu interfaz lo permite.\par
+Para que tengas una gu\'eda de ruta clara y no pierdas ning\'fan detalle t\'e9cnico al empezar a soldar y programar, aqu\'ed tienes el resumen ejecutivo de todo lo que hemos dise\'f1ado para tu Nucleo-L4P5ZG:\par
+Checklist de Hardware (Lo que necesitas)\par
+Cerebro: STM32 Nucleo-L4P5ZG.\par
+Wi-Fi: M\'f3dulo ESP8266 (ESP-01S).\par
+Esclavo 1 (Silo/Ambiente): Arduino + DHT11 + HC-SR04 + Stepper Motor (con driver ULN2003) + Ventilador (con Rel\'e9/MOSFET).\par
+Esclavo 2 (Puerta): Arduino + Servomotor + 2 Finales de carrera + 2 Botones f\'edsicos + Sensor Infrarrojo (Receptor).\par
+Extras: Fuente de alimentaci\'f3n externa (5V 3A recomendada), resistencias de \par
+\par
+ (I2C) y \par
+\par
+ (Sensores/Botones).\par
+\f1\u-10179?\u-8480?\u-497?\f2  \f0 Configuraci\'f3n de Pines en STM32CubeIDE (.ioc)\par
+Cuando abras el configurador gr\'e1fico, busca estos pines:\par
+I2C1: PB8 (SCL) y PB9 (SDA) -> Para hablar con los Arduinos.\par
+UART1: PA9 (TX) y PA10 (RX) -> Para hablar con el m\'f3dulo Wi-Fi ESP8266.\par
+Baud Rate UART: Config\'faralo a 115200 (es el est\'e1ndar del ESP8266).\par
+\f3\u-10180?\u-8432?\f2  \f0 Funcionamiento de la Web\par
+La STM32 servir\'e1 un c\'f3digo HTML que incluye JavaScript (Fetch API). Esto permite que cuando pulses "Abrir Puerta" en el m\'f3vil, se env\'ede una instrucci\'f3n silenciosa a la STM32, y esta mande el comando 0x01 por el bus I2C al Arduino de la puerta instant\'e1neamente.\par
+\'bfPor d\'f3nde prefieres empezar a trabajar hoy? Puedo generarte el c\'f3digo completo de los Arduinos para que los dejes listos, o el c\'f3digo C del Maestro para la Nucleo.\par
+AI responses may include mistakes. Learn more\par
+}
+ 
